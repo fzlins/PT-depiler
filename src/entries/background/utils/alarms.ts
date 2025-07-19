@@ -22,11 +22,26 @@ export async function createFlushUserInfoJob() {
   // 获取自动刷新参数
   const {
     enabled = false,
-    interval = 1,
-    retry: { max: retryMax = 0, interval: retryInterval = 5 } = {},
+    interval = 1, // in hours
+    retry: { max: retryMax = 0, interval: retryInterval = 5 } = {}, // in minutes
   } = configStore?.userInfo?.autoReflush ?? {};
+  if (!enabled) {
+    return;
+  }
 
-  function autoFlushUserInfo(retryIndex: number = 0) {
+  // 立即执行一次
+  await autoFlushUserInfo(0)();
+
+  async function scheduleNextJob(executeTime: number) {
+    await jobs.scheduleJob({
+      id: EJobType.FlushUserInfo,
+      type: "once",
+      date: executeTime,
+      execute: autoFlushUserInfo(0),
+    });
+  }
+
+  function autoFlushUserInfo(retryIndex: number) {
     return async () => {
       const curDate = new Date();
       const curDateFormat = format(curDate, "yyyy-MM-dd");
@@ -73,27 +88,22 @@ export async function createFlushUserInfoJob() {
 
       // 如果本次有失败的刷新操作，则设置重试
       if (failFlushSites.length > 0 && retryIndex < retryMax) {
+        const retryTime = Date.now() + retryInterval * 60 * 1000;
         sendMessage("logger", {
           msg: `Retrying auto-refresh for ${failFlushSites.length} failed sites in ${retryInterval} minutes (Retry #${retryIndex + 1})`,
         }).catch();
         await jobs.scheduleJob({
           id: EJobType.FlushUserInfo + "-Retry-" + retryIndex,
           type: "once",
-          date: +curDate + retryInterval * 60 * 1000, // retryInterval in minutes
+          date: retryTime,
           execute: autoFlushUserInfo(retryIndex + 1),
         });
       }
-    };
-  }
 
-  if (enabled) {
-    await jobs.scheduleJob({
-      id: EJobType.FlushUserInfo,
-      type: "interval",
-      duration: 1000 * 60 * 60 * interval, // interval in hours
-      immediate: true,
-      execute: autoFlushUserInfo(),
-    });
+      // 无论成功与否，都设置下一次执行时间
+      const nextExecuteTime = Date.now() + interval * 60 * 60 * 1000;
+      await scheduleNextJob(nextExecuteTime);
+    };
   }
 }
 
