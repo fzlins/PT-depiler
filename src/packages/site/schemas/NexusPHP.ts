@@ -12,6 +12,8 @@ import {
   type ITorrent,
   type ITorrentTag,
   type IUserInfo,
+  type ISearchEntryRequestConfig,
+  type ISearchResult,
 } from "../types";
 import {
   createDocument,
@@ -511,6 +513,40 @@ export default class NexusPHP extends PrivateSite {
       size: ["img.size"], // 大小
       time: ["img.time"], // 发布时间 （仅生成 selector， 后面会覆盖）
     } as Record<keyof ITorrent, string[]>;
+  }
+
+  public override async getSearchResult(
+    keywords?: string,
+    searchEntry: ISearchEntryRequestConfig = {},
+  ): Promise<ISearchResult> {
+    const firstPageResult = await super.getSearchResult(keywords, searchEntry);
+
+    if (firstPageResult.hasNextPage) {
+      // 如果有下一页，则继续请求
+      const secondPageResult = await super.getSearchResult(keywords, {
+        ...searchEntry,
+        requestConfig: {
+          ...searchEntry.requestConfig,
+          params: {
+            ...searchEntry.requestConfig?.params,
+            page: 1,
+          },
+        },
+      });
+      // 合并两页的结果（data 数组拼接，其余字段以第一页为主, hasNextPage 以第二页为准）
+      return {
+        ...firstPageResult,
+        data: [...(firstPageResult.data ?? []), ...(secondPageResult.data ?? [])],
+        hasNextPage: secondPageResult.hasNextPage,
+      };
+    }
+
+    return firstPageResult;
+  }
+
+  public override async checkHasNextPage(doc: Document | object | any): Promise<boolean> {
+    const nextPageLink = Sizzle("a[href*='page=1']", doc);
+    return nextPageLink.length > 0;
   }
 
   public override async transformSearchPage(

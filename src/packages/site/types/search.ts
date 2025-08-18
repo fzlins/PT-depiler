@@ -277,5 +277,6 @@ export interface IElementQuery {
 
 export interface ISearchResult {
   status: EResultParseStatus;
+  hasNextPage: boolean;
   data: ITorrent[];
 }

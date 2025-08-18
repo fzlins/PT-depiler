@@ -154,6 +154,7 @@ export default class BittorrentSite {
     console?.log(`[Site] ${this.name} start search with keywords:`, keywords, "input searchEntry:", searchEntry);
     const result: ISearchResult = {
       data: [],
+      hasNextPage: false,
       status: EResultParseStatus.unknownError,
     };
 
@@ -251,6 +252,7 @@ export default class BittorrentSite {
     try {
       const req = await this.request(requestConfig);
       result.data = await this.transformSearchPage(req.data, { keywords, searchEntry, requestConfig });
+      result.hasNextPage = await this.checkHasNextPage(req.data);
       result.status = EResultParseStatus.success;
     } catch (e) {
       if (import.meta.env.DEV) {
@@ -267,6 +269,14 @@ export default class BittorrentSite {
       }
     }
     return result;
+  }
+
+  /**
+   * 检查是否还有下一页
+   * @param data
+   */
+  public async checkHasNextPage(doc: Document | object | any): Promise<boolean> {
+    return false;
   }
 
   /**
