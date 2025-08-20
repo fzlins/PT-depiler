@@ -28,11 +28,11 @@ const { advanceFilterDictRef, stringifyFilterFn, resetAdvanceFilterDictFn, reset
 
 // 种子状态选项
 const statusOptions = [
-  { value: ETorrentStatus.unknown, label: "未知", icon: "mdi-help-circle", color: "grey" },
+  { value: ETorrentStatus.unknown, label: "未知", icon: "mdi-help", color: "grey" },
   { value: ETorrentStatus.downloading, label: "下载中", icon: "mdi-arrow-down", color: "info" },
   { value: ETorrentStatus.seeding, label: "做种中", icon: "mdi-arrow-up", color: "success" },
-  { value: ETorrentStatus.inactive, label: "未活动", icon: "mdi-wifi-strength-off", color: "grey" },
-  { value: ETorrentStatus.completed, label: "已完成", icon: "mdi-check", color: "grey" },
+  { value: ETorrentStatus.inactive, label: "未活动", icon: "mdi-pause", color: "warning" },
+  { value: ETorrentStatus.completed, label: "已完成", icon: "mdi-check", color: "success" },
 ];
 
 function updateTableFilter() {

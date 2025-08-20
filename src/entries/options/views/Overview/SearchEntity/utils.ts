@@ -50,7 +50,7 @@ export const tableCustomFilter = useTableCustomFilter({
             return "未知";
         }
       },
-      build: (value: ETorrentStatus) => {
+      build: (value: ETorrentStatus | undefined) => {
         // 将枚举值转换为中文字符串用于显示
         const normalizedValue = value ?? ETorrentStatus.unknown;
         switch (normalizedValue) {
